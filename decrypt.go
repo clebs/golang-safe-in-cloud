@@ -8,11 +8,9 @@ import (
 	"crypto/cipher"
 	"crypto/sha1"
 	"encoding/binary"
-	"encoding/xml"
 	"errors"
+	"fmt"
 	"io/ioutil"
-	"log"
-	"os"
 
 	"golang.org/x/crypto/pbkdf2"
 )
@@ -26,53 +24,16 @@ var (
 	ErrNoInputSet = errors.New("No Input was set. Forgotten to set a Input?")
 )
 
-// Cryption is the struct which holds the
-// de- en-cryption stuff
-type Cryption struct {
-	Input          *bufio.Reader
-	Password       string
-	CryptoGetSubFD cryptContainer
-	Crypto         cryptContainer
-	SubFD          *bufio.Reader
-}
-
-// cryptContainer holds the crypto stuff
-// for one crypt operation
-type cryptContainer struct {
-	Password []byte
-	Salt     []byte
-	IV       []byte
-}
-
-// NewSafeInCloud return the NewSafeInCloud root object
-func NewSafeInCloud() *Cryption {
-	return &Cryption{}
-}
-
-// SetInputDirect sets the direct input per filecontent
-func (c *Cryption) SetInputDirect(content []byte) {
-	c.Input = bufio.NewReader(bytes.NewBuffer(content))
-}
-
-// SetInputFile sets the input by filename
-func (c *Cryption) SetInputFile(filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	c.Input = bufio.NewReader(f)
-	return nil
-}
-
 // getSubFD returns the subFD of the input
 func (c *Cryption) getSubFD() error {
 	var err error
 	var magic uint16
 	binary.Read(c.Input, binary.LittleEndian, &magic) // magic
-	_, err = c.Input.ReadByte()                       // sver
+	k, err := c.Input.ReadByte()                      // sver
 	if err != nil {
 		return err
 	}
+	fmt.Println(k)
 	c.CryptoGetSubFD.Salt, err = c.readByteArray()
 	if err != nil {
 		return err
@@ -142,26 +103,22 @@ func (c *Cryption) getOutput() ([]byte, error) {
 
 // Decrypt is the Endpoint to start decrypting of
 // the database. Before that you need to set password
-func (c *Cryption) Decrypt() (*Database, error) {
+func (c *Cryption) Decrypt() error {
 	var err error
 	if len(c.Password) == 0 {
-		return nil, ErrNoCredentialsSet
+		return ErrNoCredentialsSet
 	}
 	if c.Input == nil {
-		return nil, ErrNoInputSet
+		return ErrNoInputSet
 	}
 	if err = c.getSubFD(); err != nil {
-		return nil, err
+		return err
 	}
-	output, err := c.getOutput()
+	c.Raw, err = c.getOutput()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var db Database
-	if err = xml.Unmarshal(output, &db); err != nil {
-		log.Fatal(err)
-	}
-	return &db, nil
+	return c.parseDatabase()
 }
 
 // readByteArraySubFD reads a byte array with the size of
@@ -190,10 +147,4 @@ func (c *Cryption) readByteArray() ([]byte, error) {
 		return nil, err
 	}
 	return buf, nil
-}
-
-// SetPassword sets the password for the basic
-// auth
-func (c *Cryption) SetPassword(pw string) {
-	c.Password = pw
 }

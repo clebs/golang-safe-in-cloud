@@ -2,9 +2,10 @@ package sic
 
 // Database is the root container of the xml
 type Database struct {
-	Ghosts []Ghost `xml:"ghost"`
-	Labels []Label `xml:"label"`
-	Cards  []Card  `xml:"card"`
+	Ghosts   []Ghost `xml:"ghost"`
+	Labels   []Label `xml:"label"`
+	Cards    []Card  `xml:"card"`
+	Callback func()  `xml:"-"`
 }
 
 // File is contains one file

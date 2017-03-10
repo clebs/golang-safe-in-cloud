@@ -2,18 +2,19 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/maxibanki/SafeInCloud"
 )
 
 func main() {
 	c := sic.NewSafeInCloud()
-	c.SetInputFile("SafeInCloud.db")
+	if err := c.SetInputFile("SafeInCloud.db"); err != nil {
+		panic(err)
+	}
 	c.SetPassword("foo")
 	db, err := c.Decrypt()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	for _, v := range db.Cards {
 		if v.Template {

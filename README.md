@@ -1,7 +1,8 @@
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/maxibanki/sicGo/issues)
-[![GoDoc](https://godoc.org/github.com/maxibanki/sicGo?status.svg)](http://godoc.org/github.com/maxibanki/sicGo)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/maxibanki/golang-safe-in-cloud/issues)
+[![GoDoc](https://godoc.org/github.com/maxibanki/golang-safe-in-cloud?status.svg)](http://godoc.org/github.com/maxibanki/golang-safe-in-cloud)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
-[![Go Report](https://img.shields.io/badge/Go_report-A+-brightgreen.svg)](http://goreportcard.com/report/maxibanki/sicGo)
+[![Go Report](https://img.shields.io/badge/Go_report-A+-brightgreen.svg)](http://goreportcard.com/report/maxibanki/golang-safe-in-cloud)
+[![Build Status](https://travis-ci.org/maxibanki/golang-safe-in-cloud.svg?branch=master)](https://travis-ci.org/maxibanki/golang-safe-in-cloud)
 
 # SafeInCloud Golang Decryption
 

@@ -8,142 +8,92 @@ import (
 	"crypto/cipher"
 	"crypto/sha1"
 	"encoding/binary"
-	"errors"
-	"fmt"
+	"io"
 	"io/ioutil"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/pbkdf2"
 )
 
-var (
-	// ErrIncorrectCredentials means that the credentials are incorrect
-	ErrIncorrectCredentials = errors.New("Incorrect credentials")
-	// ErrNoCredentialsSet means that the credentials are not set
-	ErrNoCredentialsSet = errors.New("No credentials set. Forgotten to set a password?")
-	// ErrNoInputSet means that no Input was set
-	ErrNoInputSet = errors.New("No Input was set. Forgotten to set a Input?")
-)
+// ErrIncorrectCredentials means that the credentials are incorrect
+var ErrIncorrectCredentials = errors.New("Incorrect credentials")
 
-// getSubFD returns the subFD of the input
-func (c *Cryption) getSubFD() error {
-	var err error
+// Decrypt decrypts a SafeInCloud database by a given file (e.g. os.Open)
+// and a password
+func Decrypt(file io.Reader, password string) ([]byte, error) {
+	data := bufio.NewReader(file)
 	var magic uint16
-	binary.Read(c.Input, binary.LittleEndian, &magic) // magic
-	k, err := c.Input.ReadByte()                      // sver
-	if err != nil {
-		return err
+	// Decrypt the FD
+	if err := binary.Read(data, binary.LittleEndian, &magic); err != nil {
+		return nil, errors.Wrap(err, "could not read magic")
 	}
-	fmt.Println(k)
-	c.CryptoGetSubFD.Salt, err = c.readByteArray()
-	if err != nil {
-		return err
+	if _, err := data.ReadByte(); err != nil {
+		return nil, errors.Wrap(err, "could not read sver")
 	}
-	c.CryptoGetSubFD.IV, err = c.readByteArray() // nonce
+	salt, err := readByteArray(data)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "could not read salt")
 	}
-	block, err := aes.NewCipher(pbkdf2.Key([]byte(c.Password), c.CryptoGetSubFD.Salt, 10000, 32, sha1.New))
+	nonce, err := readByteArray(data)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "could not read nonce")
 	}
-	mode := cipher.NewCBCDecrypter(block, c.CryptoGetSubFD.IV)
-	c.Crypto.Salt, err = c.readByteArray()
+	pwd := pbkdf2.Key([]byte(password), salt, 10000, 32, sha1.New)
+	salt, err = readByteArray(data)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "could not read salt")
 	}
-	src, err := c.readByteArray()
+	src, err := readByteArray(data)
 	if err != nil {
-		return err
+		return nil, errors.Wrap(err, "could not read subfd")
 	}
-	mode.CryptBlocks(src, src)
-
-	c.SubFD = bufio.NewReader(bytes.NewBuffer(src))
-
-	return nil
-}
-
-// getOutput returns the decrypted output from the database
-// it have to be a given subFD before
-func (c *Cryption) getOutput() ([]byte, error) {
-	var err error
-	c.Crypto.IV, err = c.readByteArraySubFD()
+	if err := decryptAES(pwd, nonce, &src); err != nil {
+		return nil, errors.Wrap(err, "could not decrypt aes")
+	}
+	fd := bufio.NewReader(bytes.NewBuffer(src))
+	encFile, err := ioutil.ReadAll(data)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not read remaining encrypted content")
 	}
-	c.Crypto.Password, err = c.readByteArraySubFD()
+	nonce, err = readByteArray(fd)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not read nonce")
+	}
+	pwd, err = readByteArray(fd)
 	if err != nil {
 		return nil, ErrIncorrectCredentials
 	}
-	_, err = c.readByteArraySubFD() // check
+	if _, err = readByteArray(fd); err != nil {
+		return nil, err
+	}
+	if err := decryptAES(pwd, nonce, &encFile); err != nil {
+		return nil, errors.Wrap(err, "could not decrypt aes")
+	}
+	zReader, err := zlib.NewReader(bytes.NewReader(encFile))
 	if err != nil {
 		return nil, err
 	}
-	pbkdf2.Key(c.Crypto.Password, c.Crypto.Salt, 1000, 32, sha1.New)
-	block, err := aes.NewCipher(c.Crypto.Password)
-	if err != nil {
-		return nil, err
-	}
-	data, err := ioutil.ReadAll(c.Input)
-	if err != nil {
-		return nil, err
-	}
-	mode := cipher.NewCBCDecrypter(block, c.Crypto.IV)
-	mode.CryptBlocks(data, data)
-	zReader, err := zlib.NewReader(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	output, err := ioutil.ReadAll(zReader)
-	if err != nil {
-		return nil, err
-	}
-	zReader.Close()
-	return output, nil
+	defer zReader.Close()
+	return ioutil.ReadAll(zReader)
 }
 
-// Decrypt is the Endpoint to start decrypting of
-// the database. Before that you need to set password
-func (c *Cryption) Decrypt() error {
-	var err error
-	if len(c.Password) == 0 {
-		return ErrNoCredentialsSet
-	}
-	if c.Input == nil {
-		return ErrNoInputSet
-	}
-	if err = c.getSubFD(); err != nil {
-		return err
-	}
-	c.Raw, err = c.getOutput()
+func decryptAES(pwd, nonce []byte, content *[]byte) error {
+	block, err := aes.NewCipher(pwd)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not create cipher")
 	}
-	return c.parseDatabase()
+	cipher.NewCBCDecrypter(block, nonce).CryptBlocks(*content, *content)
+	return nil
 }
 
-// readByteArraySubFD reads a byte array with the size of
-// the given size in the first byte from the subFD
-func (c *Cryption) readByteArraySubFD() ([]byte, error) {
-	size, err := c.SubFD.ReadByte()
+// readByteArray reads a byte array with the given size in the next byte
+func readByteArray(data *bufio.Reader) ([]byte, error) {
+	size, err := data.ReadByte()
 	if err != nil {
 		return nil, err
 	}
 	buf := make([]byte, size)
-	if err = binary.Read(c.SubFD, binary.LittleEndian, &buf); err != nil {
-		return nil, err
-	}
-	return buf, nil
-}
-
-// readByteArray reads a byte array with the given size
-// of the first byte
-func (c *Cryption) readByteArray() ([]byte, error) {
-	size, err := c.Input.ReadByte()
-	if err != nil {
-		return nil, err
-	}
-	buf := make([]byte, size)
-	if err = binary.Read(c.Input, binary.LittleEndian, &buf); err != nil {
+	if err = binary.Read(data, binary.LittleEndian, &buf); err != nil {
 		return nil, err
 	}
 	return buf, nil

@@ -3,47 +3,32 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 [![Go Report](https://img.shields.io/badge/Go_report-A+-brightgreen.svg)](http://goreportcard.com/report/maxibanki/sicGo)
 
-# SafeInCloud Golang lib
+# SafeInCloud Golang Decryption
 
-`sicGo` is a golang libary for doing reading and writing operations with the SafeInCloud database.
+Integrates the decryption of a SafeInCloud database
 
-### Features:
-- Decrypt SafeInCloud database
-- Parse the xml
+# Example
 
-### TODO:
-- Add Encryption
-- Add methods for addCard, addFile, del- etc. 
-
-### Example:
-```go
+```golang
 package main
 
 import (
-	"fmt"
-	"log"
+    "fmt"
+    "log"
+    "os"
 
-	"github.com/maxibanki/SafeInCloud"
+    "github.com/maxibanki/golang-safe-in-cloud"
 )
 
 func main() {
-	c := sic.NewSafeInCloud()
-	c.SetInputFile("SafeInCloud.db")
-	c.SetPassword("foo")
-	db, err := c.Decrypt()
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, v := range db.Cards {
-		if v.Template {
-			continue
-		}
-		fmt.Println("----------CARD----------")
-		fmt.Printf("Title: %s\n", v.Title)
-		fmt.Printf("Notes %s\n", v.Notes)
-		for _, f := range v.Fields {
-			fmt.Printf("\tField: %s Type: '%s' Value: '%s'\n", f.Name, f.Type, f.Value)
-		}
-	}
+    file, err := os.Open("SafeInCloud.db")
+    if err != nil {
+        log.Fatalf("could not read file: %v", err)
+    }
+    raw, err := sic.Decrypt(file, "foobar")
+    if err != nil {
+        log.Fatalf("could not decrypt: %v", err)
+    }
+    fmt.Println(string(raw))
 }
 ```

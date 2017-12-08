@@ -6,7 +6,7 @@
 
 # SafeInCloud Golang Decryption
 
-Integrates the decryption of a SafeInCloud database
+Provides decryption of a SafeInCloud database in Golang.
 
 # Example
 

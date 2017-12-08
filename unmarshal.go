@@ -7,13 +7,12 @@ import (
 )
 
 type Database struct {
-	Notes   []string  `xml:"notes"`
-	LabelID []string  `xml:"label_id"`
-	File    [][]File  `xml:"file"`
-	Ghost   []Ghost   `xml:"ghost"`
-	Label   []Label   `xml:"label"`
-	Card    []Card    `xml:"card"`
-	Field   [][]Field `xml:"field"`
+	Notes   []string `xml:"notes"`
+	LabelID []string `xml:"label_id"`
+	File    [][]File `xml:"file"`
+	Ghost   []Ghost  `xml:"ghost"`
+	Label   []Label  `xml:"label"`
+	Card    []Card   `xml:"card"`
 }
 
 type Ghost struct {
@@ -29,16 +28,17 @@ type Label struct {
 }
 
 type Card struct {
-	ID          string `xml:"id,attr"`
-	Symbol      string `xml:"symbol,attr"`
-	Template    string `xml:"template,attr"`
-	Type        string `xml:"type,attr"`
-	WebsiteIcon string `xml:"website_icon,attr"`
-	TimeStamp   string `xml:"time_stamp,attr"`
-	Deleted     string `xml:"deleted,attr"`
-	Title       string `xml:"title,attr"`
-	Color       string `xml:"color,attr"`
-	Star        string `xml:"star,attr"`
+	ID          string  `xml:"id,attr"`
+	Symbol      string  `xml:"symbol,attr"`
+	Template    string  `xml:"template,attr"`
+	Type        string  `xml:"type,attr"`
+	WebsiteIcon string  `xml:"website_icon,attr"`
+	TimeStamp   string  `xml:"time_stamp,attr"`
+	Deleted     string  `xml:"deleted,attr"`
+	Title       string  `xml:"title,attr"`
+	Color       string  `xml:"color,attr"`
+	Star        string  `xml:"star,attr"`
+	Field       []Field `xml:"field"`
 }
 
 type Field struct {

@@ -30,5 +30,10 @@ func main() {
         log.Fatalf("could not decrypt: %v", err)
     }
     fmt.Println(string(raw))
+    x, err := sic.Unmarshal(raw)
+    if err != nil {
+        log.Fatalf("could not unmarshal: %v", err)
+    }
+    fmt.Printf("data: %+v\n", x)
 }
 ```

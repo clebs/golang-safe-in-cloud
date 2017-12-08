@@ -15,8 +15,8 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-// ErrIncorrectCredentials means that the credentials are incorrect
-var ErrIncorrectCredentials = errors.New("Incorrect credentials")
+// ErrIncorrectPassword means that the credentials are incorrect
+var ErrIncorrectPassword = errors.New("Incorrect credentials")
 
 // Decrypt decrypts a SafeInCloud database by a given file (e.g. os.Open)
 // and a password
@@ -39,29 +39,31 @@ func Decrypt(file io.Reader, password string) ([]byte, error) {
 		return nil, errors.Wrap(err, "could not read nonce")
 	}
 	pwd := pbkdf2.Key([]byte(password), salt, 10000, 32, sha1.New)
-	salt, err = readByteArray(data)
+	_, err = readByteArray(data) // Idk what this is; salt but not necessary?!
 	if err != nil {
 		return nil, errors.Wrap(err, "could not read salt")
 	}
-	src, err := readByteArray(data)
+	block, err := readByteArray(data)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not read subfd")
 	}
-	if err := decryptAES(pwd, nonce, &src); err != nil {
+	if err := decryptAES(pwd, nonce, &block); err != nil {
 		return nil, errors.Wrap(err, "could not decrypt aes")
 	}
-	fd := bufio.NewReader(bytes.NewBuffer(src))
+	fd := bufio.NewReader(bytes.NewBuffer(block))
 	encFile, err := ioutil.ReadAll(data)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not read remaining encrypted content")
 	}
 	nonce, err = readByteArray(fd)
-	if err != nil {
+	if err == io.ErrUnexpectedEOF {
+		return nil, ErrIncorrectPassword
+	} else if err != nil {
 		return nil, errors.Wrap(err, "could not read nonce")
 	}
 	pwd, err = readByteArray(fd)
 	if err != nil {
-		return nil, ErrIncorrectCredentials
+		return nil, ErrIncorrectPassword
 	}
 	if _, err = readByteArray(fd); err != nil {
 		return nil, err

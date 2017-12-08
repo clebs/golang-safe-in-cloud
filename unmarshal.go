@@ -1,5 +1,11 @@
 package sic
 
+import (
+	"encoding/xml"
+
+	"github.com/pkg/errors"
+)
+
 type Database struct {
 	Notes   []string  `xml:"notes"`
 	LabelID []string  `xml:"label_id"`
@@ -47,4 +53,10 @@ type Field struct {
 type File struct {
 	Name string `xml:"name,attr"`
 	Text string `xml:",chardata"`
+}
+
+// Unmarshal converts the xml in []byte into a Go struct
+func Unmarshal(raw []byte) (*Database, error) {
+	var db *Database
+	return db, errors.Wrap(xml.Unmarshal(raw, &db), "could not Unmarshal xml")
 }

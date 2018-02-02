@@ -1,8 +1,8 @@
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/maxibanki/golang-safe-in-cloud/issues)
-[![GoDoc](https://godoc.org/github.com/maxibanki/golang-safe-in-cloud?status.svg)](http://godoc.org/github.com/maxibanki/golang-safe-in-cloud)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/mxschmitt/golang-safe-in-cloud/issues)
+[![GoDoc](https://godoc.org/github.com/mxschmitt/golang-safe-in-cloud?status.svg)](http://godoc.org/github.com/mxschmitt/golang-safe-in-cloud)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
-[![Go Report](https://img.shields.io/badge/Go_report-A+-brightgreen.svg)](http://goreportcard.com/report/maxibanki/golang-safe-in-cloud)
-[![Build Status](https://travis-ci.org/maxibanki/golang-safe-in-cloud.svg?branch=master)](https://travis-ci.org/maxibanki/golang-safe-in-cloud)
+[![Go Report](https://img.shields.io/badge/Go_report-A+-brightgreen.svg)](http://goreportcard.com/report/mxschmitt/golang-safe-in-cloud)
+[![Build Status](https://travis-ci.org/mxschmitt/golang-safe-in-cloud.svg?branch=master)](https://travis-ci.org/mxschmitt/golang-safe-in-cloud)
 
 # SafeInCloud Golang Decryption
 
@@ -18,7 +18,7 @@ import (
     "log"
     "os"
 
-    "github.com/maxibanki/golang-safe-in-cloud"
+    "github.com/mxschmitt/golang-safe-in-cloud"
 )
 
 func main() {

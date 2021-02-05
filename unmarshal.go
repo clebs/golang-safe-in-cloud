@@ -39,6 +39,7 @@ type Card struct {
 	Color       string  `xml:"color,attr"`
 	Star        string  `xml:"star,attr"`
 	Field       []Field `xml:"field"`
+	Notes       string  `xml:"notes"`
 }
 
 type Field struct {
